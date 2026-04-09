@@ -1,0 +1,8 @@
+"# IT105 Final Project - Inventory & Sales System" 
+"## Group Members" 
+"- Marial Angel Zuniega - Project Manager" 
+"- Francheska Faith Batalla - Database Administrator" 
+"- Mary Franxine Nicol - SQL Developer" 
+"- Akisha Miel Reomalis - QA/Tester" 
+"- Rafael Baltazar - Documentation Lead" 
+"- Christofer Baldano - Security Officer" 
