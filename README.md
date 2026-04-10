@@ -4,5 +4,5 @@
 "- Francheska Faith Batalla - Database Administrator" 
 "- Mary Franxine Nicol - SQL Developer" 
 "- Akisha Miel Reomalis - QA/Tester" 
-"- Rafael Baltazar - Documentation Lead" 
+"- Rafael Baltasar - Documentation Lead" 
 "- Christofer Baldano - Security Officer" 
