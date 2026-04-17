@@ -1,0 +1,50 @@
+=====================================================
+PHASE 2: PERFORMANCE BASELINE REPORT (PRE-INDEXING)
+=====================================================
+Date: April 17, 2026
+Database: inventory_sales_db
+Dataset Scale: ~200,000 Records
+
+1. ACTUAL ROW COUNTS
+-----------------------------------------------------
+- ORDER_ITEMS: 199,712 rows
+- ORDERS:      57,000 rows
+- CUSTOMERS:    1,000 rows
+- PRODUCTS:       200 rows
+- SUPPLIERS:      100 rows
+
+2. BASELINE PERFORMANCE METRICS
+-----------------------------------------------------
+Query: Multi-table JOIN (Customers + Orders + Items)
+Execution Time: 0.0486s* *(Note: Current speed is fast due to local SSD caching, but 
+efficiency is low as shown in the EXPLAIN output below.)
+
+3. EXPLAIN PLAN ANALYSIS
+-----------------------------------------------------
+Running EXPLAIN on the core BI queries reveals:
+
+- TYPE: ALL (Full Table Scan)
+  The database engine is reading every single one of the 199,712 
+  rows in ORDER_ITEMS. It is not "jumping" to the data; it is 
+  searching the entire disk.
+
+- KEY: NULL
+  No indexes are being utilized. Even though Primary Keys exist, 
+  the complex JOIN relationships are not optimized, forcing the 
+  system to rely on raw processing power rather than indexed lookups.
+
+- ROWS: 199,712
+  The optimizer confirms it must examine the maximum number of 
+  rows possible for every query execution.
+
+4. OBSERVATION & VERDICT
+-----------------------------------------------------
+Without indexing, the system is performing "Full Table Scans" on 
+the 'ORDER_ITEMS' and 'ORDERS' tables. While currently manageable 
+at 200k rows, this will cause significant performance degradation, 
+high CPU usage, and dashboard timeouts as the dataset scales 
+further or handles multiple concurrent users.
+
+VERDICT: Indexing on Foreign Keys (customer_id, product_id, order_id) 
+is CRITICAL for Phase 3.
+=====================================================
