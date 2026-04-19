@@ -1,0 +1,55 @@
+=====================================================
+PHASE 3: BI QUERY TEST RESULTS (REVISED DATASET)
+=====================================================
+Date: April 17, 2026
+Database: inventory_sales_db
+Total Rows: 199,712 (order_items) | 57,000 (orders)
+
+-----------------------------------------------------
+QUERY 1: Total Sales Per Month (Revenue Trend)
+Description: Shows monthly revenue to identify peak seasons.
+-----------------------------------------------------
+Year  | Month | Total Revenue | Number of Orders
+-----------------------------------------------------
+[Paste first 10 rows from phpMyAdmin here]
+
+
+-----------------------------------------------------
+QUERY 2: Top 10 Best-Selling Products
+Description: Identifies products with the highest sales volume.
+-----------------------------------------------------
+Product ID | Product Name | Total Sold | Total Revenue
+-----------------------------------------------------
+[Paste first 10 rows from phpMyAdmin here]
+
+
+-----------------------------------------------------
+QUERY 3: Average Order Value Per Customer
+Description: Segments customers by spending behavior.
+-----------------------------------------------------
+Customer ID | Customer Name | Orders | Avg Value | Total Spent
+-----------------------------------------------------
+[Paste first 10 rows from phpMyAdmin here]
+
+
+-----------------------------------------------------
+QUERY 4: Year-over-Year Revenue Comparison
+Description: Compares monthly revenue between 2023 and 2024.
+-----------------------------------------------------
+Month | 2024 Revenue | 2023 Revenue
+-----------------------------------------------------
+[Paste first 10 rows from phpMyAdmin here]
+
+
+-----------------------------------------------------
+QUERY 5: Customer Loyalty (Purchase Frequency)
+Description: Identifies high-frequency customers for VIP programs.
+-----------------------------------------------------
+Customer ID | Customer Name | Total Orders | Total Spent
+-----------------------------------------------------
+[Paste first 10 rows from phpMyAdmin here]
+
+
+=====================================================
+END OF REPORT
+=====================================================
