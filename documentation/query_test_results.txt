@@ -1,5 +1,5 @@
 =====================================================
-PHASE 5: BI QUERY TEST RESULTS & STAR SCHEMA VERIFICATION
+BI QUERY TEST RESULTS & STAR SCHEMA VERIFICATION
 =====================================================
 Date: April 26, 2026
 Database: inventory_sales_system
@@ -94,6 +94,7 @@ Customer ID | Customer Name      | Total Orders | Total Spent | Avg Order Value
 454         | Kenneth Williams   | 71           | 206516.10   | 2908.68
 5           | Kiara Brown        | 71           | 197942.36   | 2787.92
 246         | Julie Johnson      | 71           | 201067.27   | 2831.93
+
 
 -----------------------------------------------------
 STAR SCHEMA VERIFICATION & PERFORMANCE SUMMARY
