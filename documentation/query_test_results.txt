@@ -95,6 +95,7 @@ Customer ID | Customer Name      | Total Orders | Total Spent | Avg Order Value
 5           | Kiara Brown        | 71           | 197942.36   | 2787.92
 246         | Julie Johnson      | 71           | 201067.27   | 2831.93
 
+
 -----------------------------------------------------
 STAR SCHEMA VERIFICATION & PERFORMANCE SUMMARY
 -----------------------------------------------------
