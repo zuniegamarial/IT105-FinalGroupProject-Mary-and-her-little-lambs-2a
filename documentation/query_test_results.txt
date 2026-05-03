@@ -1,0 +1,122 @@
+=====================================================
+BI QUERY TEST RESULTS & STAR SCHEMA VERIFICATION
+=====================================================
+Date: April 13, 2026
+Database: inventory_sales_system
+Total Rows: 99,856 (order_items) | 28,500 (orders)
+
+-----------------------------------------------------
+QUERY 1: Total Sales Per Month (Revenue Trend)
+Description: Shows monthly revenue to identify peak seasons.
+Execution Time: 0.2798 seconds
+-----------------------------------------------------
+Year  | Month | Total Revenue | Number of Orders
+-----------------------------------------------------
+2026  | 4     | 1722908.74    | 627
+2026  | 3     | 3259015.04    | 1197
+2026  | 2     | 3108194.83    | 1121
+2026  | 1     | 3162995.90    | 1167
+2025  | 12    | 3176657.01    | 1162
+2025  | 11    | 3214870.01    | 1167
+2025  | 10    | 3256931.89    | 1187
+2025  | 9     | 3372710.62    | 1242
+2025  | 8     | 3486169.43    | 1278
+2025  | 7     | 3267008.71    | 1205
+
+-----------------------------------------------------
+QUERY 2: Top 10 Best-Selling Products
+Description: Identifies products with the highest sales volume.
+Execution Time: 0.2163 seconds
+-----------------------------------------------------
+Product ID | Product Name | Total Sold | Total Revenue
+-----------------------------------------------------
+86         | Hat 82       | 3305       | 1125121.15
+59         | Mouse 44     | 3248       | 530138.56
+11         | Bread 12     | 3180       | 1242298.80
+82         | Charger 72   | 3180       | 788353.80
+84         | Shorts 13    | 3166       | 565447.60
+10         | Yoga Mat 15  | 3155       | 1068314.55
+29         | Eggs 33      | 3147       | 1010659.05
+75         | Yoga Mat 18  | 3141       | 31881.15
+63         | Gloves 60    | 3138       | 725536.98
+76         | Smartphone 10| 3137       | 1098232.33
+
+-----------------------------------------------------
+QUERY 3: Average Order Value Per Customer
+Description: Segments customers by spending behavior.
+Execution Time: 0.0521 seconds
+-----------------------------------------------------
+Customer ID | Customer Name      | Orders | Avg Value | Lifetime Spent
+-----------------------------------------------------
+181         | Erin Schneider PhD | 48     | 3418.59   | 164092.17
+470         | Diana Tate         | 57     | 3385.66   | 192982.58
+158         | Brandon Brown      | 49     | 3282.10   | 160823.14
+412         | Jeffrey Mercer     | 42     | 3242.78   | 136196.73
+173         | Christine Hurley   | 47     | 3242.61   | 152402.53
+297         | Kyle Ortiz         | 47     | 3204.05   | 150590.33
+314         | Vanessa Anderson   | 50     | 3193.78   | 159689.23
+287         | Emily Arnold       | 49     | 3187.40   | 156182.56
+111         | Jason Simmons MD   | 53     | 3174.44   | 168245.26
+340         | Alison Bates       | 55     | 3169.30   | 174311.60
+
+-----------------------------------------------------
+QUERY 4: Year-over-Year Revenue Comparison
+Description: Compares monthly revenue between 2026 and 2025.
+Execution Time: 0.2875 seconds
+-----------------------------------------------------
+Month | 2026 Revenue | 2025 Revenue | % Change
+-----------------------------------------------------
+1     | 3162995.90   | 3478823.19   | -9.08
+2     | 3108194.83   | 2696611.36   | 15.26
+3     | 3259015.04   | 3312503.73   | -1.61
+4     | 1722908.74   | 3125657.55   | -44.88
+5     | 0.00         | 3418604.45   | -100.00
+6     | 0.00         | 3425347.10   | -100.00
+7     | 0.00         | 3267008.71   | -100.00
+8     | 0.00         | 3486169.43   | -100.00
+9     | 0.00         | 3372710.62   | -100.00
+10    | 0.00         | 3256931.89   | -100.00
+
+-----------------------------------------------------
+QUERY 5: Customer Loyalty (Purchase Frequency)
+Description: Identifies high-frequency customers for VIP programs.
+Execution Time: 0.0390 seconds
+-----------------------------------------------------
+Customer ID | Customer Name      | Total Orders | Total Spent | Avg Order Value
+-----------------------------------------------------
+460         | Mrs. Terri Lee MD  | 78           | 210358.32   | 2696.90
+443         | Anthony Perez      | 75           | 217536.93   | 2900.49
+416         | Joshua Perez       | 74           | 195862.62   | 2646.79
+408         | James Kim          | 73           | 226159.76   | 3098.08
+404         | Jonathan Hawkins   | 73           | 186825.07   | 2559.25
+385         | Brian Ross         | 72           | 184591.32   | 2563.77
+352         | Sean Gonzalez      | 72           | 204348.09   | 2838.17
+454         | Kenneth Williams   | 71           | 206516.10   | 2908.68
+5           | Kiara Brown        | 71           | 197942.36   | 2787.92
+246         | Julie Johnson      | 71           | 201067.27   | 2831.93
+
+
+-----------------------------------------------------
+STAR SCHEMA VERIFICATION & PERFORMANCE SUMMARY
+-----------------------------------------------------
+Date: April 26, 2026
+Database Status: 
+- Local (XAMPP): 99,856 rows
+- Star Schema (inventory_sales_star): 15,000 rows migrated
+
+Execution Performance Baseline:
+1. Total Sales Trend: 0.2798 seconds
+2. Top Products: 0.2163 seconds
+3. Avg Order Value: 0.0521 seconds
+4. YoY Comparison: 0.2875 seconds
+5. Loyalty Frequency: 0.0390 seconds
+
+Star Schema Status:
+- Tables Created: YES
+- Row Migration: 15,000 rows successfully inserted into star_fact_sales.
+- Integrity: Multi-table joins verified across dim_customer, dim_product, and dim_date.
+- Errors: None (Duplicate key errors resolved using INSERT IGNORE).
+
+=====================================================
+END OF REPORT
+=====================================================
