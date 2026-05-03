@@ -113,6 +113,19 @@ A database-driven inventory and sales management system for retail businesses. T
 └── README.md
 
 
+Phase 4: Cloud Deployment
+**Status:** Complete
+
+### Repository Organization
+[/backup](./backup)**: Contains database snapshots for disaster recovery.
+[/cloud](./cloud)**: Documentation and screenshots of the cloud migration.
+
+### Deployment Summary
+The database is now live on **Railway. Connection was verified by querying the `order_items` table, confirming a total of **99,856** records.
+
+**Documentation: [View Cloud Deployment PDF](./cloud/cloud_deployment.pdf).
+
+
 ---
 
 ## Upcoming Phases
