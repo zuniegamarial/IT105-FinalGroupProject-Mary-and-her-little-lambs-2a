@@ -1,0 +1,11 @@
+Railway Deployment Notes 
+------------------------- 
+Deployed by: Mary Franxine Nicol 
+Date: April 19, 2026 
+order_items count: 99,856 
+ 
+Connection Details: 
+Host: roundhouse.proxy.rlwy.net 
+Port: 35473 
+Database: railway 
+User: root 
