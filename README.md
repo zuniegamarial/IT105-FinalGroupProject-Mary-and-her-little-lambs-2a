@@ -127,4 +127,4 @@ A database-driven inventory and sales management system for retail businesses. T
 Sir Red (GitHub: [guired513](https://github.com/guired513))
 
 ## Repository Link
-[Insert your GitHub repo URL here]
+https://github.com/zuniegamarial/IT105-FinalGroupProject-Mary-and-her-little-lambs-2a
