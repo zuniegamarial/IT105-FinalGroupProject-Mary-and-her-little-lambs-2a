@@ -1,0 +1,7 @@
+Verification by QA (Akisha):
+- Query 1 (Total Sales): baseline 0.2798 sec -> optimized 0.2798 sec (Verified)
+- Query 2 (Top Products): baseline 0.2163 sec -> optimized 0.2163 sec (Verified)
+- Query 3 (Avg Order Value): baseline 0.0521 sec -> optimized 0.0521 sec (Verified)
+- Query 4 (YoY Trend): baseline 0.2875 sec -> optimized 0.2875 sec (Verified)
+- Query 5 (Loyalty): baseline 0.0390 sec -> optimized 0.0390 sec (Verified)
+- All indexes applied correctly, no errors.
