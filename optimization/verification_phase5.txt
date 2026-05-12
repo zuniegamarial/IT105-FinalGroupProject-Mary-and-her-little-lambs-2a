@@ -6,6 +6,6 @@ Verification by QA (Akisha):
 - Query 5 (Loyalty): baseline 0.0390 sec -> optimized 0.0515 sec (Verified)
 
 Summary:
-- All queries executed successfully on the 'inventory_sales_system' database.
+- All queries executed successfully on the database.
 - Significant performance gain observed in Query 4 (YoY Trend), reducing from 0.2875s to 0.1810s.
 - All table joins and indexes verified; no SQL errors detected.
