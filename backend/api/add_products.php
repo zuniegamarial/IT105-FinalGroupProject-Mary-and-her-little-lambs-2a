@@ -4,16 +4,29 @@ require_once 'config.php';
 $data = json_decode(file_get_contents("php://input"), true);
 
 $name = $data['name'] ?? '';
-$category = $data['category'] ?? '';
 $price = $data['price'] ?? 0;
 $stock = $data['stock'] ?? 0;
-$supplier = $data['supplier'] ?? '';
+$supplierName = $data['supplier'] ?? '';
 
-$sql = "INSERT INTO products (name, category, price, stock, supplier) VALUES (?, ?, ?, ?, ?)";
+// Find or insert supplier
+$supplier_id = null;
+if ($supplierName) {
+    $stmt = $pdo->prepare("SELECT supplier_id FROM SUPPLIERS WHERE name = ?");
+    $stmt->execute([$supplierName]);
+    $supplier = $stmt->fetch(PDO::FETCH_ASSOC);
+    if ($supplier) {
+        $supplier_id = $supplier['supplier_id'];
+    } else {
+        $stmt = $pdo->prepare("INSERT INTO SUPPLIERS (name) VALUES (?)");
+        $stmt->execute([$supplierName]);
+        $supplier_id = $pdo->lastInsertId();
+    }
+}
+
+$sql = "INSERT INTO PRODUCTS (name, price, current_stock, supplier_id) VALUES (?, ?, ?, ?)";
 $stmt = $pdo->prepare($sql);
-
-if ($stmt->execute([$name, $category, $price, $stock, $supplier])) {
-    echo json_encode(["success" => true, "message" => "Product added successfully", "id" => $pdo->lastInsertId()]);
+if ($stmt->execute([$name, $price, $stock, $supplier_id])) {
+    echo json_encode(["success" => true, "message" => "Product added", "id" => $pdo->lastInsertId()]);
 } else {
     echo json_encode(["success" => false, "message" => "Failed to add product"]);
 }
