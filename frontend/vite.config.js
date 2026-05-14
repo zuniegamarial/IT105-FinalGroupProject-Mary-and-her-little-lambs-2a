@@ -6,7 +6,7 @@ export default defineConfig({
   server: {
     proxy: {
       '/api': {
-        target: 'http://localhost/IT105-FinalGroupProject-Mary-and-her-little-lambs-2a/backend/api',
+        target: 'http://localhost/IT105-FinalGroupProject-YourGroupName-2a/backend/api',
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/api/, '')
       }

@@ -1,4 +1,5 @@
 <?php
+header("Access-Control-Allow-Origin: *");
 require_once 'config.php';
 
 try {
@@ -9,7 +10,7 @@ try {
             COALESCE(s.name, 'Unknown') as supplier,
             p.current_stock as stock,
             p.price,
-            'General' as category   
+            COALESCE(p.size, 'General') as category   -- using 'size' as category
         FROM PRODUCTS p
         LEFT JOIN SUPPLIERS s ON p.supplier_id = s.supplier_id
         ORDER BY p.product_id DESC
