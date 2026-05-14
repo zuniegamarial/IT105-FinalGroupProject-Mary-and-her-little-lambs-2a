@@ -87,6 +87,43 @@ A database-driven inventory and sales management system for retail businesses. T
 2. Populate fact and dimension tables using `INSERT INTO ... SELECT` from the normalized tables.
 
 ---
+##  Phase 4: Cloud Deployment
+**Status:** Complete
+
+### Repository Organization
+* **[/backup](./backup)**: Contains database snapshots for disaster recovery.
+* **[/cloud](./cloud)**: Documentation and screenshots of the cloud migration.
+
+### Deployment Summary
+The database is now live on **Railway**. Connection was verified by querying the `order_items` table, confirming a total of **99,856** records.
+
+**Documentation:** [View Cloud Deployment PDF](./cloud/cloud_deployment.pdf)
+
+**Phase 5 – Database Optimization & Verification (Week 14)**
+Deliverables
+Optimized SQL script (with indexes): /queries/optimized_queries.sql
+
+Performance comparison log: /documentation/optimized_performance.txt   
+
+QA Verification report: /documentation/verification_phase5.txt   
+
+Execution plan screenshots: /documentation/explain_plan_after.png
+
+Key Achievements
+Implemented a strategic indexing plan on orders(order_date), order_items(order_id), order_items(product_id), and orders(customer_id) to eliminate full table scans.  
+
+Achieved a 42% performance gain on monthly revenue trends, reducing execution time from 0.7543s to 0.4331s.  
+
+Optimized the top-selling products query, resulting in a 61% speed increase from 0.8434s to 0.3247s.  
+
+Improved average order value calculations by 52%, bringing execution time down to 0.1215s.  
+
+Conducted full QA verification to ensure all table joins and indexes are functional with zero SQL errors.  
+
+Verified significant performance improvements in Year-over-Year trend analysis, reducing query time from 0.2875s to 0.1810s.
+
+
+---
 
 ## Repository Structure
 /
