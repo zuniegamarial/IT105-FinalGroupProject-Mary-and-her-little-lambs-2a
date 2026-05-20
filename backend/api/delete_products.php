@@ -23,23 +23,23 @@ try {
 }
 
 $data = json_decode(file_get_contents("php://input"), true);
-$id = $data['id'] ?? 0;
 
-if (!$id) {
-    echo json_encode(["success" => false, "message" => "Product ID required"]);
-    exit();
-}
+if (isset($data['id'])) {
+    $product_id = intval($data['id']);
 
-try {
-    $stmt = $pdo->prepare("DELETE FROM PRODUCTS WHERE product_id = ?");
-    $stmt->execute([$id]);
-    
-    if ($stmt->rowCount() > 0) {
-        echo json_encode(["success" => true, "message" => "Product deleted"]);
-    } else {
-        echo json_encode(["success" => false, "message" => "Product not found"]);
+    try {
+        $stmt = $pdo->prepare("DELETE FROM products WHERE product_id = :id");
+        $stmt->bindParam(':id', $product_id, PDO::PARAM_INT);
+        $stmt->execute();
+        
+        echo json_encode(["success" => true]);
+        exit;
+    } catch (PDOException $e) {
+        echo json_encode(["success" => false, "message" => "PDO Error: " . $e->getMessage()]);
+        exit;
     }
-} catch(PDOException $e) {
-    echo json_encode(["success" => false, "error" => $e->getMessage()]);
+} else {
+    echo json_encode(["success" => false, "message" => "Missing Product ID"]);
+    exit();
 }
 ?>
