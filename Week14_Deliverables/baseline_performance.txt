@@ -1,0 +1,130 @@
+===========================================
+BASELINE PERFORMANCE - Mary (SQL Developer)
+Date: 05/08/2026
+Database: inventory_sales_system
+===========================================
+
+QUERY 1: Total Sales Per Month (Revenue Trend)
+-------------------------------------------
+SQL Statement:
+SELECT 
+    YEAR(o.order_date) AS year,
+    MONTH(o.order_date) AS month,
+    SUM(oi.subtotal) AS total_revenue,
+    COUNT(DISTINCT o.order_id) AS number_of_orders
+FROM orders o
+JOIN order_items oi ON o.order_id = oi.order_id
+GROUP BY YEAR(o.order_date), MONTH(o.order_date)
+ORDER BY year DESC, month DESC;
+
+Execution Time: 0.7543 seconds
+
+EXPLAIN Output:
+
+id: 1
+select_type: SIMPLE
+table: o
+type: ALL
+possible_keys: NULL
+key: NULL
+key_len: NULL
+ref: NULL
+rows: 28155
+Extra: Using filesort
+
+id: 1
+select_type: SIMPLE
+table: oi
+type: ref
+possible_keys: order_id
+key: order_id
+key_len: 4
+ref: inventory_sales_system.o.order_id
+rows: 1
+Extra: 
+
+===========================================
+
+QUERY 2: Top 10 Best-Selling Products
+-------------------------------------------
+SQL STATEMENT
+SELECT 
+    p.product_id,
+    p.name AS product_name,
+    SUM(oi.quantity) AS total_quantity_sold,
+    SUM(oi.subtotal) AS total_revenue_generated
+FROM products p
+JOIN order_items oi ON p.product_id = oi.product_id
+GROUP BY p.product_id, p.name
+ORDER BY total_quantity_sold DESC
+LIMIT 10;
+
+Execution Time: 0.8434 seconds
+
+EXPLAIN Output:
+
+id: 1
+select_type: SIMPLE
+table: p
+type: ALL
+possible_keys: PRIMARY
+key: NULL
+key_len: NULL
+ref: NULL
+rows: 100
+Extra: Using Temporary; Using filesort
+
+id: 1
+select_type: SIMPLE
+table: oi
+type: ref
+possible_keys: product_id
+key: product_id
+key_len: 4
+ref: inventory_sales_system.p.product_id
+rows: 499
+Extra: 
+
+===========================================
+
+QUERY 3: Average Order Value Per Customer
+-------------------------------------------
+SQL STATEMENT
+SELECT 
+    c.customer_id,
+    c.name AS customer_name,
+    COUNT(o.order_id) AS number_of_orders,
+    AVG(o.total_amount) AS average_order_value,
+    SUM(o.total_amount) AS lifetime_spent
+FROM customers c
+LEFT JOIN orders o ON c.customer_id = o.customer_id
+GROUP BY c.customer_id, c.name
+HAVING number_of_orders > 0
+ORDER BY average_order_value DESC
+LIMIT 20;
+
+Execution Time: 0.2530 seconds
+
+EXPLAIN Output:
+
+id: 1
+select_type: SIMPLE
+table: c
+type: ALL
+possible_keys: NULL
+key: NULL
+key_len: NULL
+ref: NULL
+rows: 500
+Extra: Using Temporary; Using filesort
+
+id: 1
+select_type: SIMPLE
+table: o
+type: ref
+possible_keys: customer_id
+key: customer_id
+key_len: 5
+ref: inventory_sales_system.p.product_id
+rows: 28
+Extra: 
