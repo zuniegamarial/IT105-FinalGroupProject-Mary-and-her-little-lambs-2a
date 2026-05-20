@@ -1,33 +1,62 @@
 <?php
-require_once 'config.php';
+header("Access-Control-Allow-Origin: http://localhost:5173");
+header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS");
+header("Access-Control-Allow-Headers: Content-Type, Authorization");
+header("Content-Type: application/json; charset=UTF-8");
+
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    http_response_code(200);
+    exit();
+}
+
+$host = 'localhost';
+$dbname = 'inventory_sales_db';
+$username = 'root';
+$password = '';
+
+try {
+    $pdo = new PDO("mysql:host=$host;dbname=$dbname;charset=utf8", $username, $password);
+    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+} catch(PDOException $e) {
+    echo json_encode(["success" => false, "error" => "Connection failed: " . $e->getMessage()]);
+    exit();
+}
 
 $data = json_decode(file_get_contents("php://input"), true);
 $id = $data['id'] ?? 0;
 $name = $data['name'] ?? '';
 $price = $data['price'] ?? 0;
 $stock = $data['stock'] ?? 0;
-$supplierName = $data['supplier'] ?? '';
-$category = $data['category'] ?? '';
+$supplier = $data['supplier'] ?? '';
+$category = $data['category'] ?? 'General';
 
-$supplier_id = null;
-if ($supplierName) {
-    $stmt = $pdo->prepare("SELECT supplier_id FROM SUPPLIERS WHERE name = ?");
-    $stmt->execute([$supplierName]);
-    $supplier = $stmt->fetch(PDO::FETCH_ASSOC);
-    if ($supplier) {
-        $supplier_id = $supplier['supplier_id'];
-    } else {
-        $stmt = $pdo->prepare("INSERT INTO SUPPLIERS (name) VALUES (?)");
-        $stmt->execute([$supplierName]);
-        $supplier_id = $pdo->lastInsertId();
-    }
+if (!$id || empty($name)) {
+    echo json_encode(["success" => false, "message" => "Invalid data"]);
+    exit();
 }
 
-$sql = "UPDATE PRODUCTS SET name=?, price=?, current_stock=?, supplier_id=?, size=? WHERE product_id=?";
-$stmt = $pdo->prepare($sql);
-if ($stmt->execute([$name, $price, $stock, $supplier_id, $category, $id])) {
+try {
+    // Get or create supplier
+    $supplier_id = null;
+    if (!empty($supplier)) {
+        $stmt = $pdo->prepare("SELECT supplier_id FROM SUPPLIERS WHERE name = ?");
+        $stmt->execute([$supplier]);
+        $supplierRow = $stmt->fetch(PDO::FETCH_ASSOC);
+        if ($supplierRow) {
+            $supplier_id = $supplierRow['supplier_id'];
+        } else {
+            $stmt = $pdo->prepare("INSERT INTO SUPPLIERS (name) VALUES (?)");
+            $stmt->execute([$supplier]);
+            $supplier_id = $pdo->lastInsertId();
+        }
+    }
+    
+    $sql = "UPDATE PRODUCTS SET name=?, price=?, current_stock=?, size=?, supplier_id=? WHERE product_id=?";
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute([$name, $price, $stock, $category, $supplier_id, $id]);
+    
     echo json_encode(["success" => true, "message" => "Product updated"]);
-} else {
-    echo json_encode(["success" => false, "message" => "Update failed"]);
+} catch(PDOException $e) {
+    echo json_encode(["success" => false, "error" => $e->getMessage()]);
 }
 ?>
