@@ -24,7 +24,8 @@ function App() {
         return [{ username: 'admin', password: 'admin', role: 'admin' }];
     });
 
-    const API_BASE = 'http://localhost/IT105-FinalGroupProject-Mary-and-her-little-lambs-2a/backend/api';
+    // Use relative path - Vite will proxy to XAMPP
+    const API_BASE = '/api';
 
     const addAuditLog = (action, details) => {
         const newLog = { id: Date.now(), timestamp: new Date().toLocaleString(), action, details };
@@ -35,15 +36,28 @@ function App() {
         localStorage.setItem('stockly_users', JSON.stringify(users));
     }, [users]);
 
-    // Fetch products
+    // Fetch products - maps database columns to what React expects
     const fetchProducts = async () => {
         try {
+            console.log('Fetching products from:', `${API_BASE}/products.php`);
             const response = await fetch(`${API_BASE}/products.php`);
             const data = await response.json();
-            console.log('Fetched products:', data);
+            console.log('Raw API response:', data);
+            
             if (Array.isArray(data)) {
-                setProducts(data);
+                // Map database fields to React component fields
+                const mappedProducts = data.map(product => ({
+                    id: product.product_id || product.id,
+                    name: product.name,
+                    price: product.price,
+                    stock: product.current_stock || product.stock,
+                    supplier: product.supplier_name || product.supplier || 'Unknown',
+                    category: product.size || product.category || 'General'
+                }));
+                console.log('Mapped products:', mappedProducts);
+                setProducts(mappedProducts);
             } else {
+                console.error('API did not return array:', data);
                 setProducts([]);
             }
         } catch (error) {
@@ -77,7 +91,7 @@ function App() {
             addAuditLog('LOGIN', `${user.username} (${user.role}) logged in`);
             fetchProducts();
         } else {
-            alert('Invalid credentials');
+            alert('Invalid credentials. Use admin/admin or register new account.');
         }
     };
 
@@ -91,29 +105,45 @@ function App() {
         setProducts([]);
     };
 
-    // Add product
-    const addProduct = async (e) => {
-        e.preventDefault();
-        try {
-            const response = await fetch(`${API_BASE}/add_product.php`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(formData),
-            });
-            const result = await response.json();
-            if (result.success) {
-                await fetchProducts();
-                addAuditLog('INSERT', `Added product: ${formData.name}`);
-                setFormData({ name: '', category: '', price: '', stock: '', supplier: '' });
-                alert('Product added');
-            } else {
-                alert('Failed to add product');
-            }
-        } catch (error) {
-            console.error(error);
-            alert('Error adding product');
+   // Add product
+const addProduct = async (e) => {
+    e.preventDefault();
+    
+    console.log('Sending:', formData);
+    
+    try {
+        const response = await fetch('/api/add_product.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                name: formData.name,
+                price: parseFloat(formData.price),
+                stock: parseInt(formData.stock),
+                supplier: formData.supplier,
+                category: formData.category
+            }),
+        });
+        
+        const result = await response.json();
+        console.log('Response:', result);
+        
+        if (result.success) {
+            // Refresh product list
+            const productsRes = await fetch('/api/products.php');
+            const productsData = await productsRes.json();
+            setProducts(productsData);
+            
+            addAuditLog('INSERT', `Added product: ${formData.name}`);
+            setFormData({ name: '', category: '', price: '', stock: '', supplier: '' });
+            alert('Product added successfully!');
+        } else {
+            alert('Error: ' + (result.message || 'Unknown error'));
         }
-    };
+    } catch (error) {
+        console.error('Error:', error);
+        alert('Error adding product: ' + error.message);
+    }
+};
 
     // Update product
     const updateProduct = async (e) => {
@@ -130,7 +160,7 @@ function App() {
                 addAuditLog('UPDATE', `Updated: ${formData.name}`);
                 setEditingProduct(null);
                 setFormData({ name: '', category: '', price: '', stock: '', supplier: '' });
-                alert('Product updated');
+                alert('Product updated successfully!');
             } else {
                 alert('Update failed');
             }
@@ -165,6 +195,7 @@ function App() {
     const sellProduct = async (id, name, currentStock) => {
         if (currentStock <= 0) {
             setTransactionMessage(`Cannot sell ${name}: out of stock`);
+            setTimeout(() => setTransactionMessage(''), 3000);
             return;
         }
         // Optimistic update
@@ -173,7 +204,7 @@ function App() {
         setTransactionMessage(`Sold 1 ${name}`);
         setTimeout(() => setTransactionMessage(''), 3000);
         
-        // Also update in DB via API (optional - call your sell endpoint)
+        // Update in DB
         try {
             await fetch(`${API_BASE}/sell_product.php`, {
                 method: 'POST',
@@ -209,24 +240,49 @@ function App() {
         return (
             <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
                 <div className="bg-white rounded-2xl shadow-xl max-w-md w-full p-8">
-                    <h1 className="text-3xl font-bold text-center mb-2">Stockly</h1>
-                    <p className="text-center text-gray-500 mb-6">Inventory System</p>
+                    <h1 className="text-3xl font-bold text-center text-gray-800 mb-2">Stockly</h1>
+                    <p className="text-center text-gray-500 mb-6">Inventory Management System</p>
                     {!isRegistering ? (
                         <form onSubmit={handleLogin} className="space-y-5">
-                            <div><label className="block text-sm font-medium">Username</label><input type="text" value={loginUsername} onChange={e => setLoginUsername(e.target.value)} className="mt-1 w-full border rounded-lg px-3 py-2" required /></div>
-                            <div><label className="block text-sm font-medium">Password</label><input type="password" value={loginPassword} onChange={e => setLoginPassword(e.target.value)} className="mt-1 w-full border rounded-lg px-3 py-2" required /></div>
-                            <button type="submit" className="w-full bg-blue-600 text-white py-2 rounded-lg">Login</button>
-                            <p className="text-center text-sm">No account? <button type="button" onClick={() => setIsRegistering(true)} className="text-blue-600">Register</button></p>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700">Username</label>
+                                <input type="text" value={loginUsername} onChange={e => setLoginUsername(e.target.value)} className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" required />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700">Password</label>
+                                <input type="password" value={loginPassword} onChange={e => setLoginPassword(e.target.value)} className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" required />
+                            </div>
+                            <button type="submit" className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 rounded-lg transition">Login</button>
+                            <p className="text-center text-sm text-gray-500">
+                                Don't have an account?{' '}
+                                <button type="button" onClick={() => setIsRegistering(true)} className="text-blue-600 hover:underline">Register</button>
+                            </p>
                         </form>
                     ) : (
                         <form onSubmit={handleRegister} className="space-y-5">
-                            <div><label className="block text-sm font-medium">Username</label><input type="text" value={regUsername} onChange={e => setRegUsername(e.target.value)} className="mt-1 w-full border rounded-lg px-3 py-2" required /></div>
-                            <div><label className="block text-sm font-medium">Password</label><input type="password" value={regPassword} onChange={e => setRegPassword(e.target.value)} className="mt-1 w-full border rounded-lg px-3 py-2" required /></div>
-                            <div><label className="block text-sm font-medium">Role</label><select value={regRole} onChange={e => setRegRole(e.target.value)} className="mt-1 w-full border rounded-lg px-3 py-2"><option value="user">User</option><option value="admin">Admin</option></select></div>
-                            <button type="submit" className="w-full bg-green-600 text-white py-2 rounded-lg">Register</button>
-                            <p className="text-center text-sm">Already have an account? <button type="button" onClick={() => setIsRegistering(false)} className="text-blue-600">Login</button></p>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700">Username</label>
+                                <input type="text" value={regUsername} onChange={e => setRegUsername(e.target.value)} className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2" required />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700">Password</label>
+                                <input type="password" value={regPassword} onChange={e => setRegPassword(e.target.value)} className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2" required />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700">Role</label>
+                                <select value={regRole} onChange={e => setRegRole(e.target.value)} className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2">
+                                    <option value="user">User</option>
+                                    <option value="admin">Admin</option>
+                                </select>
+                            </div>
+                            <button type="submit" className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-2 rounded-lg transition">Register</button>
+                            <p className="text-center text-sm text-gray-500">
+                                Already have an account?{' '}
+                                <button type="button" onClick={() => setIsRegistering(false)} className="text-blue-600 hover:underline">Login</button>
+                            </p>
                         </form>
                     )}
+                    <p className="text-xs text-center text-gray-400 mt-6">Demo admin: admin / admin</p>
                 </div>
             </div>
         );
@@ -237,28 +293,33 @@ function App() {
         return (
             <div className="min-h-screen bg-gray-50">
                 {/* Header */}
-                <div className="bg-white shadow-sm border-b px-4 py-4 flex justify-between items-center">
-                    <div><h1 className="text-2xl font-bold">Stockly Admin Dashboard</h1><p className="text-sm text-gray-500">{currentUser.username} ({currentUser.role})</p></div>
-                    <button onClick={handleLogout} className="bg-red-100 text-red-700 px-4 py-2 rounded-lg">Logout</button>
+                <div className="bg-white shadow-sm border-b">
+                    <div className="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
+                        <div>
+                            <h1 className="text-2xl font-bold text-gray-800">Stockly Admin Dashboard</h1>
+                            <p className="text-sm text-gray-500">Logged in as {currentUser?.username} ({currentUser?.role})</p>
+                        </div>
+                        <button onClick={handleLogout} className="bg-red-100 text-red-700 px-4 py-2 rounded-lg hover:bg-red-200 transition">Logout</button>
+                    </div>
                 </div>
 
                 <div className="max-w-7xl mx-auto px-4 py-6">
                     {transactionMessage && <div className="mb-4 p-3 bg-green-100 text-green-800 rounded-lg">{transactionMessage}</div>}
                     
                     <div className="grid lg:grid-cols-3 gap-6">
-                        {/* Left Column - Add Product Form & Audit Log */}
+                        {/* Left Column */}
                         <div className="space-y-6">
                             <div className="bg-white rounded-xl shadow-sm p-5">
                                 <h2 className="text-lg font-semibold mb-4">{editingProduct ? 'Update Product' : 'Add New Product'}</h2>
                                 <form onSubmit={editingProduct ? updateProduct : addProduct} className="space-y-3">
-                                    <input type="text" placeholder="Name" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} className="w-full border rounded-lg px-3 py-2" required />
-                                    <input type="text" placeholder="Category / Size" value={formData.category} onChange={e => setFormData({...formData, category: e.target.value})} className="w-full border rounded-lg px-3 py-2" />
-                                    <input type="number" step="0.01" placeholder="Price" value={formData.price} onChange={e => setFormData({...formData, price: e.target.value})} className="w-full border rounded-lg px-3 py-2" required />
-                                    <input type="number" placeholder="Stock" value={formData.stock} onChange={e => setFormData({...formData, stock: e.target.value})} className="w-full border rounded-lg px-3 py-2" required />
-                                    <input type="text" placeholder="Supplier" value={formData.supplier} onChange={e => setFormData({...formData, supplier: e.target.value})} className="w-full border rounded-lg px-3 py-2" />
+                                    <input type="text" placeholder="Name" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} className="w-full border border-gray-300 rounded-lg px-3 py-2" required />
+                                    <input type="text" placeholder="Category / Size" value={formData.category} onChange={e => setFormData({...formData, category: e.target.value})} className="w-full border border-gray-300 rounded-lg px-3 py-2" />
+                                    <input type="number" step="0.01" placeholder="Price" value={formData.price} onChange={e => setFormData({...formData, price: e.target.value})} className="w-full border border-gray-300 rounded-lg px-3 py-2" required />
+                                    <input type="number" placeholder="Stock" value={formData.stock} onChange={e => setFormData({...formData, stock: e.target.value})} className="w-full border border-gray-300 rounded-lg px-3 py-2" required />
+                                    <input type="text" placeholder="Supplier" value={formData.supplier} onChange={e => setFormData({...formData, supplier: e.target.value})} className="w-full border border-gray-300 rounded-lg px-3 py-2" />
                                     <div className="flex gap-2">
-                                        <button type="submit" className="flex-1 bg-blue-600 text-white py-2 rounded-lg">{editingProduct ? 'Update' : 'Add'} Product</button>
-                                        {editingProduct && <button type="button" onClick={() => { setEditingProduct(null); setFormData({ name: '', category: '', price: '', stock: '', supplier: '' }); }} className="bg-gray-300 px-4 rounded-lg">Cancel</button>}
+                                        <button type="submit" className="flex-1 bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700">{editingProduct ? 'Update' : 'Add'} Product</button>
+                                        {editingProduct && <button type="button" onClick={() => { setEditingProduct(null); setFormData({ name: '', category: '', price: '', stock: '', supplier: '' }); }} className="bg-gray-300 text-gray-700 px-4 rounded-lg">Cancel</button>}
                                     </div>
                                 </form>
                             </div>
@@ -268,7 +329,7 @@ function App() {
                                 <div className="max-h-64 overflow-y-auto space-y-2 text-sm">
                                     {auditLogs.length === 0 ? <p className="text-gray-400">No actions yet</p> : auditLogs.map(log => (
                                         <div key={log.id} className="border-l-4 border-blue-400 pl-2 py-1">
-                                            <span className="text-xs text-gray-500">{log.timestamp}</span>
+                                            <span className="text-gray-500 text-xs">{log.timestamp}</span>
                                             <p><span className="font-medium">{log.action}</span>: {log.details}</p>
                                         </div>
                                     ))}
@@ -276,34 +337,43 @@ function App() {
                             </div>
                         </div>
 
-                        {/* Right Column - Search & Products Table */}
+                        {/* Right Column - Products Table */}
                         <div className="lg:col-span-2 space-y-6">
                             <div className="bg-white rounded-xl shadow-sm p-5">
                                 <h2 className="text-lg font-semibold mb-3">Search Products</h2>
-                                <input type="text" placeholder="Search by name, category or supplier..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} className="w-full border rounded-lg px-3 py-2" />
+                                <input type="text" placeholder="Search by name, category or supplier..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} className="w-full border border-gray-300 rounded-lg px-3 py-2" />
                             </div>
 
                             <div className="bg-white rounded-xl shadow-sm overflow-hidden">
                                 <div className="overflow-x-auto">
                                     <table className="min-w-full text-sm">
                                         <thead className="bg-gray-50">
-                                            <tr><th className="p-3 text-left">Name</th><th>Category</th><th>Price</th><th>Stock</th><th>Supplier</th><th className="text-center">Actions</th></tr>
+                                            <tr>
+                                                <th className="p-3 text-left">Name</th>
+                                                <th className="p-3 text-left">Category</th>
+                                                <th className="p-3 text-left">Price</th>
+                                                <th className="p-3 text-left">Stock</th>
+                                                <th className="p-3 text-left">Supplier</th>
+                                                <th className="text-center p-3">Actions</th>
+                                            </tr>
                                         </thead>
                                         <tbody>
                                             {filteredProducts.length === 0 ? (
-                                                <tr><td colSpan="6" className="text-center p-4 text-gray-400">No products found</td></tr>
+                                                <tr>
+                                                    <td colSpan="6" className="text-center p-4 text-gray-400">No products found</td>
+                                                </tr>
                                             ) : (
                                                 filteredProducts.map(p => (
-                                                    <tr key={p.id} className="border-t">
+                                                    <tr key={p.id} className="border-t hover:bg-gray-50">
                                                         <td className="p-3 font-medium">{p.name}</td>
-                                                        <td className="p-3">{p.category || 'General'}</td>
-                                                        <td className="p-3">${p.price}</td>
+                                                        <td className="p-3">{p.category}</td>
+                                                        <td className="p-3">${typeof p.price === 'number' ? p.price.toFixed(2) : p.price}</td>
                                                         <td className="p-3">{p.stock}</td>
-                                                        <td className="p-3">{p.supplier || 'Unknown'}</td>
+                                                        <td className="p-3">{p.supplier}</td>
                                                         <td className="p-3 text-center space-x-2 whitespace-nowrap">
-                                                            <button onClick={() => sellProduct(p.id, p.name, p.stock)} className="bg-green-100 text-green-700 px-2 py-1 rounded text-xs">Sell</button>
-                                                            <button onClick={() => startEdit(p)} className="bg-blue-100 text-blue-700 px-2 py-1 rounded text-xs">Edit</button>
-                                                            <button onClick={() => deleteProduct(p.id, p.name)} className="bg-red-100 text-red-700 px-2 py-1 rounded text-xs">Delete</button>
+                                                            <button onClick={() => sellProduct(p.id, p.name, p.stock)} className="bg-green-100 text-green-700 px-2 py-1 rounded text-xs hover:bg-green-200">Sell</button>
+                                                            <button onClick={() => startEdit(p)} className="bg-blue-100 text-blue-700 px-2 py-1 rounded text-xs hover:bg-blue-200">Edit</button>
+                                                            <button onClick={() => deleteProduct(p.id, p.name)} className="bg-red-100 text-red-700 px-2 py-1 rounded text-xs hover:bg-red-200">Delete</button>
                                                         </td>
                                                     </tr>
                                                 ))
@@ -322,35 +392,51 @@ function App() {
     // User Dashboard
     return (
         <div className="min-h-screen bg-gray-50">
-            <div className="bg-white shadow-sm border-b px-4 py-4 flex justify-between items-center">
-                <div><h1 className="text-2xl font-bold">Stockly User Dashboard</h1><p className="text-sm text-gray-500">{currentUser.username} ({currentUser.role})</p></div>
-                <button onClick={handleLogout} className="bg-red-100 text-red-700 px-4 py-2 rounded-lg">Logout</button>
+            <div className="bg-white shadow-sm border-b">
+                <div className="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
+                    <div>
+                        <h1 className="text-2xl font-bold text-gray-800">Stockly User Dashboard</h1>
+                        <p className="text-sm text-gray-500">Logged in as {currentUser?.username} ({currentUser?.role})</p>
+                    </div>
+                    <button onClick={handleLogout} className="bg-red-100 text-red-700 px-4 py-2 rounded-lg hover:bg-red-200 transition">Logout</button>
+                </div>
             </div>
             <div className="max-w-7xl mx-auto px-4 py-6">
                 {transactionMessage && <div className="mb-4 p-3 bg-green-100 text-green-800 rounded-lg">{transactionMessage}</div>}
                 <div className="space-y-6">
                     <div className="bg-white rounded-xl shadow-sm p-5">
                         <h2 className="text-lg font-semibold mb-3">Search Products</h2>
-                        <input type="text" placeholder="Search by name, category or supplier..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} className="w-full border rounded-lg px-3 py-2" />
+                        <input type="text" placeholder="Search by name, category or supplier..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} className="w-full border border-gray-300 rounded-lg px-3 py-2" />
                     </div>
                     <div className="bg-white rounded-xl shadow-sm overflow-hidden">
                         <div className="overflow-x-auto">
                             <table className="min-w-full text-sm">
                                 <thead className="bg-gray-50">
-                                    <tr><th className="p-3 text-left">Name</th><th>Category</th><th>Price</th><th>Stock</th><th>Supplier</th><th className="text-center">Action</th></tr>
+                                    <tr>
+                                        <th className="p-3 text-left">Name</th>
+                                        <th className="p-3 text-left">Category</th>
+                                        <th className="p-3 text-left">Price</th>
+                                        <th className="p-3 text-left">Stock</th>
+                                        <th className="p-3 text-left">Supplier</th>
+                                        <th className="text-center p-3">Action</th>
+                                    </tr>
                                 </thead>
                                 <tbody>
                                     {filteredProducts.length === 0 ? (
-                                        <tr><td colSpan="6" className="text-center p-4 text-gray-400">No products found</td></tr>
+                                        <tr>
+                                            <td colSpan="6" className="text-center p-4 text-gray-400">No products found</td>
+                                        </tr>
                                     ) : (
                                         filteredProducts.map(p => (
-                                            <tr key={p.id} className="border-t">
+                                            <tr key={p.id} className="border-t hover:bg-gray-50">
                                                 <td className="p-3 font-medium">{p.name}</td>
-                                                <td className="p-3">{p.category || 'General'}</td>
-                                                <td className="p-3">${p.price}</td>
+                                                <td className="p-3">{p.category}</td>
+                                                <td className="p-3">${typeof p.price === 'number' ? p.price.toFixed(2) : p.price}</td>
                                                 <td className="p-3">{p.stock}</td>
-                                                <td className="p-3">{p.supplier || 'Unknown'}</td>
-                                                <td className="p-3 text-center"><button onClick={() => sellProduct(p.id, p.name, p.stock)} className="bg-green-100 text-green-700 px-2 py-1 rounded text-xs">Buy</button></td>
+                                                <td className="p-3">{p.supplier}</td>
+                                                <td className="p-3 text-center">
+                                                    <button onClick={() => sellProduct(p.id, p.name, p.stock)} className="bg-green-100 text-green-700 px-2 py-1 rounded text-xs hover:bg-green-200">Buy</button>
+                                                </td>
                                             </tr>
                                         ))
                                     )}
@@ -363,7 +449,7 @@ function App() {
                         <div className="max-h-64 overflow-y-auto space-y-2 text-sm">
                             {auditLogs.length === 0 ? <p className="text-gray-400">No actions yet</p> : auditLogs.map(log => (
                                 <div key={log.id} className="border-l-4 border-blue-400 pl-2 py-1">
-                                    <span className="text-xs text-gray-500">{log.timestamp}</span>
+                                    <span className="text-gray-500 text-xs">{log.timestamp}</span>
                                     <p><span className="font-medium">{log.action}</span>: {log.details}</p>
                                 </div>
                             ))}
@@ -375,4 +461,4 @@ function App() {
     );
 }
 
-export default App;
+export default App; 
