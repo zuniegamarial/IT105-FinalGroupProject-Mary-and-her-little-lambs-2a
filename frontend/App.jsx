@@ -24,7 +24,6 @@ function App() {
         return [{ username: 'admin', password: 'admin', role: 'admin' }];
     });
 
-    // Use full URL for API
     const API_BASE = 'http://localhost/IT105-FinalGroupProject-Mary-and-her-little-lambs-2a/backend/api';
 
     const addAuditLog = (action, details) => {
@@ -36,16 +35,11 @@ function App() {
         localStorage.setItem('stockly_users', JSON.stringify(users));
     }, [users]);
 
-    // Fetch products - FIXED VERSION
     const fetchProducts = async () => {
         try {
-            console.log('Fetching products from:', `${API_BASE}/products.php`);
             const response = await fetch(`${API_BASE}/products.php`);
             const data = await response.json();
-            console.log('API Response:', data);
-            
-            if (Array.isArray(data) && data.length > 0) {
-                // Map the data to match what React expects
+            if (Array.isArray(data)) {
                 const mappedProducts = data.map(product => ({
                     id: product.product_id || product.id,
                     name: product.name,
@@ -54,10 +48,8 @@ function App() {
                     supplier: product.supplier_name || product.supplier || 'Unknown',
                     category: product.size || product.category || 'General'
                 }));
-                console.log('Mapped products:', mappedProducts);
                 setProducts(mappedProducts);
             } else {
-                console.warn('No products found or invalid data format');
                 setProducts([]);
             }
         } catch (error) {
@@ -66,7 +58,6 @@ function App() {
         }
     };
 
-    // Register
     const handleRegister = (e) => {
         e.preventDefault();
         if (!regUsername || !regPassword) return alert('Fill all fields');
@@ -81,7 +72,6 @@ function App() {
         setRegRole('user');
     };
 
-    // Login
     const handleLogin = (e) => {
         e.preventDefault();
         const user = users.find(u => u.username === loginUsername && u.password === loginPassword);
@@ -89,13 +79,12 @@ function App() {
             setLoggedIn(true);
             setCurrentUser(user);
             addAuditLog('LOGIN', `${user.username} (${user.role}) logged in`);
-            fetchProducts(); // <-- THIS IS CRITICAL
+            fetchProducts();
         } else {
-            alert('Invalid credentials. Use admin/admin or register new account.');
+            alert('Invalid credentials');
         }
     };
 
-    // Logout
     const handleLogout = () => {
         addAuditLog('LOGOUT', `${currentUser?.username} logged out`);
         setLoggedIn(false);
@@ -105,7 +94,6 @@ function App() {
         setProducts([]);
     };
 
-    // Add product
     const addProduct = async (e) => {
         e.preventDefault();
         try {
@@ -122,44 +110,58 @@ function App() {
             });
             const result = await response.json();
             if (result.success) {
-                await fetchProducts(); // Refresh product list
+                await fetchProducts();
                 addAuditLog('INSERT', `Added product: ${formData.name}`);
                 setFormData({ name: '', category: '', price: '', stock: '', supplier: '' });
                 alert('Product added successfully!');
             } else {
-                alert('Failed to add product: ' + (result.message || 'Unknown error'));
+                alert('Failed: ' + (result.message || 'Unknown error'));
             }
         } catch (error) {
-            console.error('Error adding product:', error);
+            console.error(error);
             alert('Error adding product');
         }
     };
 
-    // Update product
+    // FIXED: Update product
     const updateProduct = async (e) => {
         e.preventDefault();
+        
+        console.log('Updating product:', editingProduct.id, formData);
+        
         try {
             const response = await fetch(`${API_BASE}/update_product.php`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ ...formData, id: editingProduct.id }),
+                body: JSON.stringify({
+                    id: editingProduct.id,
+                    name: formData.name,
+                    price: parseFloat(formData.price),
+                    stock: parseInt(formData.stock),
+                    supplier: formData.supplier,
+                    category: formData.category
+                }),
             });
+            
             const result = await response.json();
+            console.log('Update response:', result);
+            
             if (result.success) {
                 await fetchProducts();
-                addAuditLog('UPDATE', `Updated: ${formData.name}`);
+                addAuditLog('UPDATE', `Updated product: ${formData.name}`);
                 setEditingProduct(null);
                 setFormData({ name: '', category: '', price: '', stock: '', supplier: '' });
                 alert('Product updated successfully!');
             } else {
-                alert('Update failed');
+                alert('Update failed: ' + (result.message || 'Unknown error'));
             }
         } catch (error) {
-            console.error(error);
+            console.error('Update error:', error);
+            alert('Error updating product: ' + error.message);
         }
     };
 
-    // Delete product
+    // FIXED: Delete product
     const deleteProduct = async (id, name) => {
         if (!window.confirm(`Delete ${name}?`)) return;
         try {
@@ -172,30 +174,44 @@ function App() {
             if (result.success) {
                 await fetchProducts();
                 addAuditLog('DELETE', `Deleted: ${name}`);
-                alert('Product deleted');
+                alert('Product deleted successfully');
             } else {
-                alert('Delete failed');
+                alert('Delete failed: ' + (result.message || 'Unknown error'));
             }
         } catch (error) {
             console.error(error);
+            alert('Error deleting product');
         }
     };
 
-    // Sell product (transaction)
+    // FIXED: Sell product (transaction with backend)
     const sellProduct = async (id, name, currentStock) => {
         if (currentStock <= 0) {
-            setTransactionMessage(`Cannot sell ${name}: out of stock`);
-            setTimeout(() => setTransactionMessage(''), 3000);
+            alert(`Cannot sell ${name}: out of stock`);
             return;
         }
-        // Optimistic update
-        setProducts(products.map(p => p.id === id ? { ...p, stock: currentStock - 1 } : p));
-        addAuditLog('TRANSACTION', `Sold 1 ${name}`);
-        setTransactionMessage(`Sold 1 ${name}`);
-        setTimeout(() => setTransactionMessage(''), 3000);
+        
+        try {
+            const response = await fetch(`${API_BASE}/sell_product.php`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id, quantity: 1 })
+            });
+            
+            const result = await response.json();
+            if (result.success) {
+                await fetchProducts(); // Refresh the product list
+                addAuditLog('TRANSACTION', `Sold 1 ${name}`);
+                alert(`Sold 1 ${name}`);
+            } else {
+                alert('Sell failed: ' + (result.message || 'Unknown error'));
+            }
+        } catch (error) {
+            console.error('Sell error:', error);
+            alert('Error selling product');
+        }
     };
 
-    // Edit product (populate form)
     const startEdit = (product) => {
         setEditingProduct(product);
         setFormData({
@@ -207,7 +223,6 @@ function App() {
         });
     };
 
-    // Filter products
     const filteredProducts = products.filter(p =>
         p.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         p.supplier?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -308,9 +323,9 @@ function App() {
                                                         <td className="p-3">{p.stock}</td>
                                                         <td className="p-3">{p.supplier}</td>
                                                         <td className="p-3 text-center space-x-2 whitespace-nowrap">
-                                                            <button onClick={() => sellProduct(p.id, p.name, p.stock)} className="bg-green-100 text-green-700 px-2 py-1 rounded text-xs">Sell</button>
-                                                            <button onClick={() => startEdit(p)} className="bg-blue-100 text-blue-700 px-2 py-1 rounded text-xs">Edit</button>
-                                                            <button onClick={() => deleteProduct(p.id, p.name)} className="bg-red-100 text-red-700 px-2 py-1 rounded text-xs">Delete</button>
+                                                            <button onClick={() => sellProduct(p.id, p.name, p.stock)} className="bg-green-100 text-green-700 px-2 py-1 rounded text-xs hover:bg-green-200">Sell</button>
+                                                            <button onClick={() => startEdit(p)} className="bg-blue-100 text-blue-700 px-2 py-1 rounded text-xs hover:bg-blue-200">Edit</button>
+                                                            <button onClick={() => deleteProduct(p.id, p.name)} className="bg-red-100 text-red-700 px-2 py-1 rounded text-xs hover:bg-red-200">Delete</button>
                                                         </td>
                                                     </tr>
                                                 ))
@@ -341,10 +356,12 @@ function App() {
                     </div>
                     <div className="bg-white rounded-xl shadow-sm overflow-hidden">
                         <table className="min-w-full text-sm">
-                            <thead className="bg-gray-50"><tr><th className="p-3 text-left">Name</th><th>Category</th><th>Price</th><th>Stock</th><th>Supplier</th><th className="text-center">Action</th></tr></thead>
+                            <thead className="bg-gray-50">
+                                <tr><th className="p-3 text-left">Name</th><th>Category</th><th>Price</th><th>Stock</th><th>Supplier</th><th className="text-center">Action</th></tr>
+                            </thead>
                             <tbody>
                                 {filteredProducts.length === 0 ? (
-                                    <tr><td colSpan="6" className="text-center p-4">No products</td></tr>
+                                    <tr><td colSpan="6" className="text-center p-4">No products found</td></tr>
                                 ) : (
                                     filteredProducts.map(p => (
                                         <tr key={p.id} className="border-t">

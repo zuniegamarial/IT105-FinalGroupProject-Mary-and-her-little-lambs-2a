@@ -1,6 +1,6 @@
 <?php
 header("Access-Control-Allow-Origin: http://localhost:5173");
-header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS");
+header("Access-Control-Allow-Methods: POST, OPTIONS");
 header("Access-Control-Allow-Headers: Content-Type, Authorization");
 header("Content-Type: application/json; charset=UTF-8");
 
@@ -18,28 +18,24 @@ try {
     $pdo = new PDO("mysql:host=$host;dbname=$dbname;charset=utf8", $username, $password);
     $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 } catch(PDOException $e) {
-    echo json_encode(["success" => false, "error" => "Connection failed: " . $e->getMessage()]);
+    echo json_encode(["success" => false, "message" => "Connection failed: " . $e->getMessage()]);
     exit();
 }
 
 $data = json_decode(file_get_contents("php://input"), true);
 $id = $data['id'] ?? 0;
-
-if (!$id) {
-    echo json_encode(["success" => false, "message" => "Product ID required"]);
-    exit();
-}
+$quantity = $data['quantity'] ?? 1;
 
 try {
-    $stmt = $pdo->prepare("DELETE FROM PRODUCTS WHERE product_id = ?");
-    $stmt->execute([$id]);
+    $stmt = $pdo->prepare("UPDATE products SET current_stock = current_stock - ? WHERE product_id = ? AND current_stock >= ?");
+    $stmt->execute([$quantity, $id, $quantity]);
     
     if ($stmt->rowCount() > 0) {
-        echo json_encode(["success" => true, "message" => "Product deleted"]);
+        echo json_encode(["success" => true, "message" => "Product sold"]);
     } else {
-        echo json_encode(["success" => false, "message" => "Product not found"]);
+        echo json_encode(["success" => false, "message" => "Insufficient stock or product not found"]);
     }
 } catch(PDOException $e) {
-    echo json_encode(["success" => false, "error" => $e->getMessage()]);
+    echo json_encode(["success" => false, "message" => $e->getMessage()]);
 }
 ?>
