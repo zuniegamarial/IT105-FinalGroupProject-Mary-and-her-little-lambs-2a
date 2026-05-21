@@ -10,7 +10,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 }
 
 $host = 'localhost';
-$dbname = 'inventory_sales_db';   // or 'inventory_sales_system'
+$dbname = 'inventory_sales_db';   // ← Make sure this matches your database name
 $username = 'root';
 $password = '';
 
