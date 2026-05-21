@@ -1,0 +1,7 @@
+Security review for Phase 5:
+
+- I have reviewed the indexes added by Francheska across all tables.
+- Confirmed: No indexes exist on sensitive credential columns such as password_hash or credit_card data.
+- Observation: An index exists on the 'email' column (unique_email). While functionally useful for lookups, it is flagged as containing PII.
+- Confirmed: Indexes added on product_id, order_date, and order_id are non-sensitive foreign keys.
+- Conclusion: The current indexes are appropriate and do not expose high-risk data.
