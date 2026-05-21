@@ -34,7 +34,7 @@ try {
         FROM PRODUCTS p
         LEFT JOIN SUPPLIERS s ON p.supplier_id = s.supplier_id
         ORDER BY p.product_id DESC
-        LIMIT 500
+        LIMIT 2000
     ");
     $products = $stmt->fetchAll(PDO::FETCH_ASSOC);
     echo json_encode($products);
