@@ -3,20 +3,14 @@ require_once 'config.php';
 
 $data = json_decode(file_get_contents("php://input"), true);
 
-$id = $data['id'] ?? 0;
-$name = $data['name'] ?? '';
-$price = $data['price'] ?? 0;
-$stock = $data['stock'] ?? 0;
-$supplier = $data['supplier'] ?? '';
-$category = $data['category'] ?? '';
+$name = trim($data['name'] ?? '');
+$price = floatval($data['price'] ?? 0);
+$stock = intval($data['stock'] ?? 0);
+$supplier = trim($data['supplier'] ?? '');
+$category = trim($data['category'] ?? '');
 
-if (!$id || empty($name)) {
-    echo json_encode(["success" => false, "message" => "Product ID and name are required"]);
-    exit();
-}
-
-if ($price <= 0) {
-    echo json_encode(["success" => false, "message" => "Price must be greater than 0"]);
+if (empty($name) || $price <= 0) {
+    echo json_encode(["success" => false, "message" => "Product name and valid price are required"]);
     exit();
 }
 
@@ -36,12 +30,19 @@ try {
         }
     }
     
-    // Update product
-    $sql = "UPDATE products SET name = ?, price = ?, current_stock = ?, size = ?, supplier_id = ? WHERE product_id = ?";
+    // Insert product
+    $sql = "INSERT INTO PRODUCTS (name, price, current_stock, size, supplier_id) VALUES (?, ?, ?, ?, ?)";
     $stmt = $pdo->prepare($sql);
-    $stmt->execute([$name, $price, $stock, $category, $supplier_id, $id]);
+    $stmt->execute([$name, $price, $stock, $category, $supplier_id]);
     
-    echo json_encode(["success" => true, "message" => "Product updated successfully"]);
+    $newId = $pdo->lastInsertId();
+    
+    echo json_encode([
+        "success" => true, 
+        "message" => "Product added successfully",
+        "id" => $newId
+    ]);
+    
 } catch(PDOException $e) {
     echo json_encode(["success" => false, "message" => "Database error: " . $e->getMessage()]);
 }
