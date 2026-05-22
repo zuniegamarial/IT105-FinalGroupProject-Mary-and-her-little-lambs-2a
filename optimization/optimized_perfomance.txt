@@ -1,0 +1,28 @@
+OPTIMIZED PERFORMANCE - Francheska (DBA)
+Date: 9/05/2026
+Database: inventory_sales_system
+Optimization Strategy: Implemented indexes on orders(order_date), order_items(order_id), order_items(product_id), and orders(customer_id).
+
+QUERY 1: Total Sales Per Month
+
+Baseline Time: 0.7543 seconds
+
+Optimized Time: 0.4331 seconds
+
+Status: Improved (~42% faster)
+
+QUERY 2: Top 10 Best-Selling Products
+
+Baseline Time: 0.8434 seconds
+
+Optimized Time: 0.3247 seconds
+
+Status: Improved (~61% faster)
+
+QUERY 3: Average Order Value Per Customer
+
+Baseline Time: 0.2530 seconds
+
+Optimized Time: 0.1215 seconds
+
+Status: Improved (~52% faster)
